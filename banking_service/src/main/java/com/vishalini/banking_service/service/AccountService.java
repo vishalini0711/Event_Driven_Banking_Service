@@ -6,6 +6,8 @@ import com.vishalini.banking_service.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class AccountService {
     @Autowired
@@ -19,5 +21,17 @@ public class AccountService {
           a.setAccountNumber(String.valueOf(
                   System.currentTimeMillis()));
            return accountRepository.save(a);
+    }
+
+    public Account getAccount(){
+        Account a1 = new Account();
+        List<Account> accountRepositoryAll = accountRepository.findAll();
+        for(Account a:accountRepositoryAll){
+            a1.setAccountNumber(a.getAccountNumber());
+            a1.setBalance(a.getBalance());
+            a1.setMobile(a.getMobile());
+            a1.setEmail(a.getEmail());
+        }
+        return a1;
     }
 }
