@@ -7,12 +7,13 @@ import com.vishalini.banking_service.dto.WithdrawRequest;
 import com.vishalini.banking_service.entity.Account;
 import com.vishalini.banking_service.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AccountService {
@@ -39,30 +40,35 @@ public class AccountService {
             a1.setBalance(a.getBalance());
             a1.setMobile(a.getMobile());
             a1.setEmail(a.getEmail());
+            a1.setId(a.getId());
+            a1.setCustomerName(a.getCustomerName());
         }
         return a1;
     }
 
     public Account depositAmount(DepositRequest depositRequest){
-        Account repositoryByAccountNumber = accountRepository.findByAccountNumber(depositRequest.getAccount());
-        double amount = repositoryByAccountNumber.getBalance() + depositRequest.getAmount();
-        Account a = new Account();
-        a.setBalance(amount);
-        accountRepository.save(a);
-        NotificationEvent event = new NotificationEvent(a.getAccountNumber(),a.getCustomerName()
-        ,a.getEmail(),"DEPOSIT",depositRequest.getAmount());
+        Account account = accountRepository.findByAccountNumber(depositRequest.getAccount());
+        double amount = account.getBalance() + depositRequest.getAmount();
+        account.setBalance(amount);
+        accountRepository.save(account);
+        NotificationEvent event = new NotificationEvent(account.getAccountNumber(),account.getCustomerName()
+        ,account.getEmail(),"DEPOSIT",depositRequest.getAmount());
+        log.info("Publishing Event : {}", event);
         kafkaTemplate.send("banking-notification-topic",event);
-        return a;
+        return account;
     }
 
     public Account withdrawAmount(WithdrawRequest withdrawRequest){
-        Account byAccountNumber = accountRepository.findByAccountNumber(withdrawRequest.getAccount());
-        if(byAccountNumber.getBalance()<withdrawRequest.getAmount()){
+        Account account = accountRepository.findByAccountNumber(withdrawRequest.getAccount());
+        if(account.getBalance()<withdrawRequest.getAmount()){
             throw new RuntimeException("Insufficent Balance");
         }
-        Account a = new Account();
-        a.setBalance(byAccountNumber.getBalance()-withdrawRequest.getAmount());
-        accountRepository.save(a);
-        return a;
+        account.setBalance(account.getBalance()-withdrawRequest.getAmount());
+        accountRepository.save(account);
+        NotificationEvent event = new NotificationEvent(account.getAccountNumber(),account.getCustomerName()
+                ,account.getEmail(),"WITHDRAW",withdrawRequest.getAmount());
+        log.info("Publishing Event : {}", event);
+        kafkaTemplate.send("banking-notification-topic",event);
+        return account;
     }
 }
