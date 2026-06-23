@@ -5,6 +5,7 @@ import com.vishalini.banking_service.dto.DepositRequest;
 import com.vishalini.banking_service.dto.NotificationEvent;
 import com.vishalini.banking_service.dto.WithdrawRequest;
 import com.vishalini.banking_service.entity.Account;
+import com.vishalini.banking_service.exception.AccountNotFoundException;
 import com.vishalini.banking_service.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +48,10 @@ public class AccountService {
     }
 
     public Account depositAmount(DepositRequest depositRequest){
-        Account account = accountRepository.findByAccountNumber(depositRequest.getAccount());
+        Account account = accountRepository
+                .findByAccountNumber(depositRequest.getAccount())
+                .orElseThrow(() ->
+                        new AccountNotFoundException("Account not found"));
         double amount = account.getBalance() + depositRequest.getAmount();
         account.setBalance(amount);
         accountRepository.save(account);
@@ -59,7 +63,7 @@ public class AccountService {
     }
 
     public Account withdrawAmount(WithdrawRequest withdrawRequest){
-        Account account = accountRepository.findByAccountNumber(withdrawRequest.getAccount());
+        Account account = accountRepository.findByAccountNumber(withdrawRequest.getAccount()).orElseThrow(()->new AccountNotFoundException("Account Not Found"));
         if(account.getBalance()<withdrawRequest.getAmount()){
             throw new RuntimeException("Insufficent Balance");
         }

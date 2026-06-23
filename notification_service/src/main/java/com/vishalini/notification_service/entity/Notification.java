@@ -1,5 +1,6 @@
 package com.vishalini.notification_service.entity;
 
+import com.vishalini.notification_service.enumPackage.NotificationClass;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -16,7 +17,8 @@ public class Notification {
     private String email;
     private String eventType;
     private Double amount;
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private NotificationClass status;
     @CreationTimestamp
     private String  createdAt;
 }
